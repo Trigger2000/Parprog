@@ -13,7 +13,8 @@ int main()
     #pragma omp parallel
     {
         int cur_id = omp_get_thread_num();
-        // ждем, пока поток с номером id+1 не сделает вывод
+        // ждем, пока поток с номером cur_id+1 не сделает вывод
+        // поток с максимальным cur_id стартует сразу же
         while (last_printed_id != cur_id + 1);
         printf("Hello world from thread %d\n", cur_id);
         last_printed_id = cur_id;

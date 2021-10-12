@@ -20,10 +20,10 @@ int main(int argc, char **argv)
     int sum_i = 0;
     // вычисление
     #pragma omp parallel for schedule(dynamic, 100) reduction(+:sum_i) 
-        for (int i = 0; i <= N; ++i)
-        {
-            sum_i += i;
-        }
+    for (int i = 0; i <= N; ++i)
+    {
+        sum_i += i;
+    }
 
     printf("%d\n", sum_i);
 
