@@ -7,6 +7,8 @@
 #include <iostream>
 #include <cmath>
 
+#include <stdlib.h>
+
 #include <omp.h>
 
 int main(int argc, char** argv)
