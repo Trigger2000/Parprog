@@ -26,7 +26,7 @@ int main(int argc, char** argv)
     omp_lock_t lock;
     omp_init_lock(&lock);
 
-    #pragma omp parallel shared(N)
+    #pragma omp parallel shared(N, sum)
     {
         long double sum_local = 0.0;
         #pragma omp for
