@@ -44,10 +44,10 @@ int main (int argc, char **argv)
 
             #pragma omp section
             {
-            section = 2;
-            for (i = 0; i < N; i++)
-                c[i] = a[i] + b[i];
-            print_results(c, tid, section);
+                section = 2;
+                for (i = 0; i < N; i++)
+                    c[i] = a[i] + b[i];
+                print_results(c, tid, section);
             }
         }
 
@@ -77,6 +77,11 @@ void print_results(float array[N], int tid, int section)
         printf("\n");
     }
 
-    #pragma omp barrier
+    // этот барьер лишний
+    // Потоки, выполняющие работу синхронизируются здесь, а затем еще раз встают на барьере
+    // на 54 строке. Потоки, не работающие в секциях, стоят один раз на 54 строке
+    // Тем самым потоки, выполняющие работу в секциях, уходят в дэдлок на 54 строке, тк
+    // они пытаются ждать другие потоки, которые уже завершились
+    // #pragma omp barrier
     printf("Thread %d done and synchronized.\n", tid); 
 }
