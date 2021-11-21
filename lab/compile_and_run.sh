@@ -1,3 +1,3 @@
 mpic++ common_parallel.cpp
-mpirun a.out
+time mpirun a.out
 rm a.out

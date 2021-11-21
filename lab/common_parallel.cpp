@@ -3,11 +3,15 @@
 #include <math.h>
 #include <mpi.h>
 
-#define ISIZE 1000
-#define JSIZE 1000
+// #include <chrono>
+
+#define ISIZE 10000
+#define JSIZE 10000
 
 int main(int argc, char **argv)
 {
+    // std::chrono::steady_clock::time_point begin1 = std::chrono::steady_clock::now();
+
     MPI_Init(NULL, NULL);
 
     int com_size = 0;
@@ -16,17 +20,13 @@ int main(int argc, char **argv)
     int rank = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     printf("Com size is %d\n", com_size);
-    // для передачи по mpi лучше аллоцировать двумерный массив как одномерный
-    // и затем для работы с ним переводить к double** (строчки 27 и 53)
-    double *data = (double*)calloc(ISIZE * JSIZE, sizeof(double));
 
-    int sending_count = ISIZE * JSIZE / com_size;
-    double *rbuf = (double*)calloc(sending_count, sizeof(double));
-    MPI_Scatter(data, sending_count, MPI_DOUBLE, rbuf, sending_count, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    // кол-во элементов, обрабатываемых одним процессом
+    int data_count = ISIZE * JSIZE / com_size;
+    double *proccess_buf = (double*)calloc(data_count, sizeof(double));
 
-    double **a = (double**)calloc(ISIZE, sizeof(double*));
-    for (int i = 0; i < ISIZE / com_size; ++i)
-        a[i] = &(rbuf[JSIZE * i]);
+    // std::chrono::steady_clock::time_point end1 = std::chrono::steady_clock::now();
+    // std::cout << "Time difference of setting = " << std::chrono::duration_cast<std::chrono::milliseconds>(end1 - begin1).count() << "[ms]" << std::endl;
 
     int i, j;
     for (i = 0; i < ISIZE / com_size; i++)
@@ -34,7 +34,7 @@ int main(int argc, char **argv)
         for (j = 0; j < JSIZE; j++)
         {
             // чтобы результат был одинаковый, надо пересчитать множитель
-            a[i][j] = 10 * (ISIZE / com_size * rank + i) + j;
+            proccess_buf[ISIZE * i + j] = 10 * (ISIZE / com_size * rank + i) + j;
         }
     }
 
@@ -42,24 +42,25 @@ int main(int argc, char **argv)
     {
         for (j = 0; j < JSIZE; j++)
         {
-            a[i][j] = sin(0.00001 * a[i][j]);
+            proccess_buf[ISIZE * i + j] = sin(0.00001 * proccess_buf[ISIZE * i + j]);
         }
     }
 
-    MPI_Gather(rbuf, sending_count, MPI_DOUBLE, data, sending_count, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    // std::chrono::steady_clock::time_point begin2 = std::chrono::steady_clock::now();
+    double *data = (double*)calloc(ISIZE * JSIZE, sizeof(double));
+    MPI_Gather(proccess_buf, data_count, MPI_DOUBLE, data, data_count, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    // std::chrono::steady_clock::time_point end2 = std::chrono::steady_clock::now();
+    // std::cout << "Time difference of gathering = " << std::chrono::duration_cast<std::chrono::milliseconds>(end2 - begin2).count() << "[ms]" << std::endl;
+    free(proccess_buf);
 
     if (rank == 0)
     {
-        double **a = (double**)calloc(ISIZE, sizeof(double*));
-        for (int i = 0; i < ISIZE; ++i)
-            a[i] = &(data[JSIZE * i]);
-
         FILE *ff = fopen("result.txt","w");
         for(i = 0; i < ISIZE; i++)
         {
             for (j = 0; j < JSIZE; j++)
             {
-                fprintf(ff, "%f ", a[i][j]);
+                fprintf(ff, "%f ", data[i * ISIZE + j]);
             }
 
             fprintf(ff, "\n");
@@ -67,6 +68,7 @@ int main(int argc, char **argv)
         fclose(ff);
     }
 
+    free(data);
     MPI_Finalize();
     return 0;
 }
