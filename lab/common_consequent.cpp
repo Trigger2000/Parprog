@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
-#define ISIZE 1000
+#include <math.h>
 
+#define ISIZE 1000
 #define JSIZE 1000
+
 int main(int argc, char **argv)
 {
     double a[ISIZE][JSIZE];
@@ -26,17 +28,14 @@ int main(int argc, char **argv)
     }
 
     ff = fopen("result.txt","w");
-
     for(i=0; i < ISIZE; i++)
     {
         for (j=0; j < JSIZE; j++)
         {
             fprintf(ff,"%f ",a[i][j]);
         }
-
         fprintf(ff,"\n");
     }
 
     fclose(ff);
-    return 0;
 }
