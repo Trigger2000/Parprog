@@ -3,8 +3,6 @@
 #include <math.h>
 #include <mpi.h>
 
-#include <iostream>
-
 #define ISIZE 1000
 #define JSIZE 1000
 
@@ -17,7 +15,7 @@ int main(int argc, char **argv)
 
     int rank = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    std::cout << com_size << "\n";
+    printf("Com size is %d\n", com_size);
     // для передачи по mpi лучше аллоцировать двумерный массив как одномерный
     // и затем для работы с ним переводить к double** (строчки 27 и 53)
     double *data = (double*)calloc(ISIZE * JSIZE, sizeof(double));
