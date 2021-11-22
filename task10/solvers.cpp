@@ -8,7 +8,7 @@ void diffur_solver::solve()
     vector y{size};
 
     // метод Ньютона
-    for (int k = 0; k < 50; ++k)
+    for (int k = 0; k < 100; ++k)
     {
         // трехдиагональная матрица Якоби
         matrix A{size};
