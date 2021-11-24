@@ -8,6 +8,7 @@ void diffur_solver::solve()
     vector y{size};
 
     // метод Ньютона
+    // в файле Math.jpg представлен вывод формул, используемых ниже
     for (int k = 0; k < 100; ++k)
     {
         // трехдиагональная матрица Якоби
@@ -15,8 +16,8 @@ void diffur_solver::solve()
         for (int i = 0; i < size - 1; ++i)
         {
             A.a_[i][i] = -2 + 5.0 * STEP * STEP / 6.0 * std::exp(-y[i]);
-            A.a_[i + 1][i] = 1 + STEP * STEP / 12.0 * std::exp(-y[i + 1]);
-            A.a_[i][i + 1] = 1 + STEP * STEP / 12.0 * std::exp(-y[i]);
+            A.a_[i + 1][i] = 1 + STEP * STEP / 12.0 * std::exp(-y[i]);
+            A.a_[i][i + 1] = 1 + STEP * STEP / 12.0 * std::exp(-y[i + 1]);
         }
         A.a_[size - 1][size - 1] = -2 + 5.0 * STEP * STEP / 6.0 * std::exp(-y[size - 1]);
 
@@ -73,18 +74,18 @@ vector sole_solver::progonka_solve()
 
     // прямой ход прогонки
     y_ar[0] = A_.a_[0][0];
-    alpha_ar[0] = -A_.a_[1][0] / y_ar[0];
+    alpha_ar[0] = -A_.a_[0][1] / y_ar[0];
     betta_ar[0] = y_[0] / y_ar[0];
 
     for (int i = 1; i < size - 1; ++i)
     {
-        y_ar[i] = A_.a_[i][i] + A_.a_[i - 1][i] * alpha_ar[i - 1];
-        alpha_ar[i] = -A_.a_[i + 1][i] / y_ar[i];
-        betta_ar[i] = (y_[i] - A_.a_[i - 1][i] * betta_ar[i - 1]) / y_ar[i];
+        y_ar[i] = A_.a_[i][i] + A_.a_[i][i - 1] * alpha_ar[i - 1];
+        alpha_ar[i] = -A_.a_[i][i + 1] / y_ar[i];
+        betta_ar[i] = (y_[i] - A_.a_[i][i - 1] * betta_ar[i - 1]) / y_ar[i];
     }
 
-    y_ar[size - 1] = A_.a_[size - 1][size - 1] + A_.a_[size - 2][size - 1] * alpha_ar[size - 2];
-    betta_ar[size - 1] = (y_[size - 1] - A_.a_[size - 2][size - 1] * betta_ar[size - 2]) / y_ar[size - 1]; 
+    y_ar[size - 1] = A_.a_[size - 1][size - 1] + A_.a_[size - 1][size - 2] * alpha_ar[size - 2];
+    betta_ar[size - 1] = (y_[size - 1] - A_.a_[size - 1][size - 2] * betta_ar[size - 2]) / y_ar[size - 1]; 
     // прямой ход прогонки
 
     // обратный ход прогонки

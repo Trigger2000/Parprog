@@ -7,6 +7,7 @@
 
 int main(int argc, char **argv)
 {
+    // выделил динамически, чтобы увеличить размер матрицы
     double **a = (double**)calloc(ISIZE, sizeof(double*));
     for (int k = 0; k < ISIZE; ++k)
     {
