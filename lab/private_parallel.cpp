@@ -22,24 +22,23 @@ int main(int argc, char **argv)
     printf("Com size is %d\n", com_size);
 
     // кол-во элементов, обрабатываемых одним процессом
-    int data_count = (ISIZE - 4) * JSIZE / com_size;
+    int row_count = (ISIZE - 4) / com_size;
+    int data_count = row_count * JSIZE;
     a = (double*)calloc(data_count, sizeof(double));
     b = (double*)calloc(data_count, sizeof(double));
     // double *b = (double*)calloc(data_count, sizeof(double));
 
     int i, j;
     // как и в случае с "общей задачей", распараллеливание удобнее всего осуществлять по внешнему индексу
-    for (i = 0; i < (ISIZE - 4) / com_size; i++)
+    for (i = 0; i < row_count; i++)
     {
         for (j = 0; j < JSIZE; j++)
         {
-            // a[i][j] = 10 * i + j;
-            a[i * JSIZE + j] = 10 * ((ISIZE - 4) / com_size * rank + i + 4) + j;
-            // b[i][j] = 0.;
+            a[i * JSIZE + j] = 10 * (row_count * rank + i + 4) + j;
         }
     }
 
-    for (i = 0; i < (ISIZE - 4) / com_size; i++)
+    for (i = 0; i < row_count; i++)
     {
         for (j = 0; j < JSIZE; j++)
         {
@@ -47,17 +46,48 @@ int main(int argc, char **argv)
         }
     }
 
-    for (i = 0; i < (ISIZE - 4) / com_size; i++)
+    for (i = 0; i < row_count; i++)
     {
         for (j = 1; j < JSIZE; j++)
         {
-            // b[i][j] = a[i + 4][j - 1] * 1.5;
             b[i * JSIZE + j] = a[i * JSIZE + j - 1] * 1.5;
         }
     }
 
     double *data = (double*)calloc(ISIZE * JSIZE, sizeof(double));
     MPI_Gather(b, data_count, MPI_DOUBLE, data, data_count, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+    // отдельно обработаем остаток, если он есть
+    if (row_count * com_size != ISIZE - 4 && rank == 0)
+    {
+        int remainder = (ISIZE - 4) % com_size;
+        double *a_helper = (double*)calloc(remainder * JSIZE, sizeof(double));
+        int i, j;
+        for (i = 0; i < remainder; i++)
+        {
+            for (j = 0; j < JSIZE; j++)
+            {
+                a_helper[i * JSIZE + j] = 10 * (row_count * com_size + i + 4) + j;
+            }
+        }
+
+        for (i = 0; i < remainder; i++)
+        {
+            for (j = 0; j < JSIZE; j++)
+            {
+                a_helper[i * JSIZE + j] = sin(0.00001 * a_helper[i * JSIZE + j]);
+            }
+        }
+
+        for (i = 0; i < remainder; i++)
+        {
+            for (j = 1; j < JSIZE; j++)
+            {
+                data[(row_count * com_size + i) * JSIZE + j] = a_helper[i * JSIZE + j - 1] * 1.5;
+            }
+        }
+        free(a_helper);
+    }
 
     if (rank == 0)
     {

@@ -22,23 +22,24 @@ int main(int argc, char **argv)
     printf("Com size is %d\n", com_size);
 
     // кол-во элементов, обрабатываемых одним процессом
-    int data_count = ISIZE * JSIZE / com_size;
+    int row_count = ISIZE / com_size;
+    int data_count = row_count * JSIZE;
     double *proccess_buf = (double*)calloc(data_count, sizeof(double));
 
     // std::chrono::steady_clock::time_point end1 = std::chrono::steady_clock::now();
     // std::cout << "Time difference of setting = " << std::chrono::duration_cast<std::chrono::milliseconds>(end1 - begin1).count() << "[ms]" << std::endl;
 
     int i, j;
-    for (i = 0; i < ISIZE / com_size; i++)
+    for (i = 0; i < row_count; i++)
     {
         for (j = 0; j < JSIZE; j++)
         {
             // чтобы результат был одинаковый, надо пересчитать множитель
-            proccess_buf[ISIZE * i + j] = 10 * (ISIZE / com_size * rank + i) + j;
+            proccess_buf[ISIZE * i + j] = 10 * (row_count * rank + i) + j;
         }
     }
 
-    for (i = 0; i < ISIZE / com_size; i++)
+    for (i = 0; i < row_count; i++)
     {
         for (j = 0; j < JSIZE; j++)
         {
@@ -49,6 +50,29 @@ int main(int argc, char **argv)
     // std::chrono::steady_clock::time_point begin2 = std::chrono::steady_clock::now();
     double *data = (double*)calloc(ISIZE * JSIZE, sizeof(double));
     MPI_Gather(proccess_buf, data_count, MPI_DOUBLE, data, data_count, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+    // отдельно обработаем остаток, если он есть
+    if (row_count * com_size != ISIZE && rank == 0)
+    {
+        int remainder = ISIZE % com_size;
+        int i, j;
+        for (i = 0; i < remainder; i++)
+        {
+            for (j = 0; j < JSIZE; j++)
+            {
+                // чтобы результат был одинаковый, надо пересчитать множитель
+                data[(row_count * com_size + i) * JSIZE + j] = 10 * (row_count * com_size + i) + j;
+            }
+        }
+
+        for (i = 0; i < remainder; i++)
+        {
+            for (j = 0; j < JSIZE; j++)
+            {
+                data[(row_count * com_size + i) * JSIZE + j] = sin(0.00001 * data[(row_count * com_size + i) * JSIZE + j]);
+            }
+        }
+    }
     // std::chrono::steady_clock::time_point end2 = std::chrono::steady_clock::now();
     // std::cout << "Time difference of gathering = " << std::chrono::duration_cast<std::chrono::milliseconds>(end2 - begin2).count() << "[ms]" << std::endl;
     free(proccess_buf);
