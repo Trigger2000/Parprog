@@ -54,8 +54,15 @@ int main(int argc, char **argv)
         }
     }
 
-    double *data = (double*)calloc(ISIZE * JSIZE, sizeof(double));
+    double *data = NULL;
+
+    if (rank == 0)
+    {
+        data = (double*)calloc(ISIZE * JSIZE, sizeof(double));
+    }
     MPI_Gather(b, data_count, MPI_DOUBLE, data, data_count, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    free(a);
+    free(b);
 
     // отдельно обработаем остаток, если он есть
     if (row_count * com_size != ISIZE - 4 && rank == 0)
@@ -101,10 +108,8 @@ int main(int argc, char **argv)
             fprintf(ff,"\n");
         }
         fclose(ff);
+        free(data);
     }
 
-    free(data);
-    free(a);
-    free(b);
     MPI_Finalize();
 }
